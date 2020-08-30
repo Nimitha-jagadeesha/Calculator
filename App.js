@@ -1,21 +1,75 @@
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { Component } from "react";
+import { Text, View, StyleSheet, SafeAreaView, Platform } from "react-native";
+import ExpressionBox from "./components/ExpressionBox";
+import ResultBox from "./components/ResultBox";
+import NumPad from "./components/NumPad";
+const  math     = require('mathjs');
+export default class App extends Component {
+  constructor(props) {
+    super(props);
+    this.state = {
+      expression: "",
+      result: "",
+      lastexpression: [],
+    };
+  }
+  _assembleExpression = (symbol) => {
+    this.setState((prevState) => ({
+      lastexpression: [...prevState.lastexpression, prevState.expression],
+      expression: prevState.expression + symbol,
+    }));
+  };
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
+  calculateResult = () => {
+    let result;
+    try {
+      result = math.evaluate(this.state.expression);
+    } catch (err) {
+      console.log(err);
+      result = "Error";
+    }
+    this.setState({
+      result: result,
+    });
+  };
+
+  clearexpression=()=>{
+    this.setState((prevState) => ({
+      lastexpression: [],
+      expression: '',
+      result:''
+    }));
+  }
+
+  rollbackExpression = () => {
+    this.state.expression &&
+      this.setState((prevState) => ({
+        expression: prevState.lastexpression.pop(),
+        lastexpression: prevState.lastexpression,
+        result:''
+      }));
+  };
+
+  render() {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ExpressionBox expression={this.state.expression} />
+        <ResultBox result={this.state.result} />
+        <NumPad
+          assembleExpression={this._assembleExpression}
+          calculateResult={this.calculateResult}
+          deletePressed={this.rollbackExpression}
+          clearexpression={this.clearexpression}
+        />
+      </SafeAreaView>
+    );
+  }
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
+    textAlign: "center",
+    paddingTop: 30,
   },
 });
